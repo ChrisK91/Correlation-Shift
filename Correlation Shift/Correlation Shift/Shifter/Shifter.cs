@@ -1,6 +1,7 @@
 ﻿using BitMiracle.LibTiff.Classic;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -314,13 +315,38 @@ namespace Correlation_Shift.Shifter
             return image;
         }
 
-        public static void SaveShiftedImage(string original, string newfolder, Tuple<int, int> offset)
+        public static void LogShift(string original, string newfolder, Tuple<int, int> offset)
         {
             using (StreamWriter sw = File.AppendText(Path.Combine(newfolder, "ShiftOffset.csv")))
             {
                 //sw.Write("OriginalName,OffsetX,OffsetY,Timestamp");
                 sw.Write("{0},{1},{2},{3}\n", Path.GetFileName(original), offset.Item1, offset.Item2, DateTime.Now.Ticks);
             }
+        }
+
+        public static void PerformShiftWithImageJ(Dictionary<string, Tuple<int, int>> FilesWithOffset, string output, string imageJPath)
+        {
+            StringBuilder sb = new StringBuilder();
+            string newPath = "";
+            string macro = Path.Combine(output, "macro.ijm");
+
+            foreach (var item in FilesWithOffset)
+            {
+                newPath = Path.Combine(output, Path.GetFileName(item.Key));
+                File.Copy(item.Key, newPath, true);
+                sb.AppendLine(string.Format("processFile(\"{0}\", {1}, {2});", newPath.Replace(@"\",@"\\"), item.Value.Item1, item.Value.Item2));
+            }
+
+            using (TextWriter sw = File.CreateText(macro))
+            {
+                sw.Write(Correlation_Shift.Properties.Resources.MacroTemplate.Replace("%COMMANDS%", sb.ToString()));
+            }
+
+            ProcessStartInfo p = new ProcessStartInfo(imageJPath);
+            p.Arguments = String.Format("-macro \"{0}\"", macro);
+            p.WorkingDirectory = output;
+            p.UseShellExecute = true;
+            Process.Start(p);
         }
     }
 }
