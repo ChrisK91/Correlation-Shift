@@ -1,0 +1,62 @@
+﻿<catel:Window x:Class="Correlation_Shift.Views.MainWindow"
+              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:catel="http://catel.codeplex.com"
+              xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+              ResizeMode="CanResize" MinWidth="800" MinHeight="600">
+    <catel:Window.Resources>
+        <Style x:Key="AlternatingListBoxItemStyle" TargetType="{x:Type ListBoxItem}">
+            <Style.Triggers>
+                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                    <Setter Property="Background" Value="#FFCDF3FB"></Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </catel:Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <TextBlock VerticalAlignment="Top" TextWrapping="Wrap" Grid.ColumnSpan="2">
+                    <Run FontSize="15">Correlation Shift</Run>
+                    <LineBreak />
+                    This tool can calculate the offset of to channels, so that the intensity correlation is maximized. If overlapping areas are present abundantly in both channels, this will - as the name implies - maximize correlation and colocalization and can <Run FontWeight="Bold">alter you data should you do colocalization/correlation analysis</Run> on it. You can use this tool to try to identify a systematic shift between channels. <Run FontWeight="Bold">Check the results carfully if meaningful output is generated!</Run>
+                    <LineBreak />
+                    <LineBreak />
+                    You can drag and drop your files onto the boxes below, to remove files select them and press the delete key on your keyboard. Select multiple files while either holding control, or shift, or select all files with Ctrl+A. The extension has to either be "tif" or "tiff". The individual images must only contain one channel. The shift will be performed on the files listed in channel 1. You will be prompted for a save location once you pressed run. You have to specify an empty directory to prevent overwriting source files.
+        </TextBlock>
+
+        <GroupBox Grid.Row="1" Header="Channel 1">
+            <ListBox ItemsSource="{Binding ChannelOneFiles}" ItemContainerStyle="{StaticResource AlternatingListBoxItemStyle}" AlternationCount="2" AllowDrop="True" SelectionMode="Extended" KeyUp="ListBox_KeyUp" Tag="1" x:Name="Channel1Listbox" ScrollViewer.ScrollChanged="Channel1Listbox_ScrollChanged">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="Drop">
+                        <catel:EventToCommand Command="{Binding HandleFileDropOne}" PassEventArgsToCommand="True" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </ListBox>
+        </GroupBox>
+
+        <GroupBox Grid.Row="1" Grid.Column="1" Header="Channel 2">
+            <ListBox ItemsSource="{Binding ChannelTwoFiles}" ItemContainerStyle="{StaticResource AlternatingListBoxItemStyle}" AlternationCount="2" AllowDrop="True" SelectionMode="Extended" KeyUp="ListBox_KeyUp" Tag="2" x:Name="Channel2Listbox" ScrollViewer.ScrollChanged="Channel2Listbox_ScrollChanged">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="Drop">
+                        <catel:EventToCommand Command="{Binding HandleFileDropTwo}" PassEventArgsToCommand="True" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </ListBox>
+        </GroupBox>
+
+        <DockPanel  Grid.Row="2" Grid.ColumnSpan="2">
+            <Button DockPanel.Dock="Left" Width="75" Content="{Binding RunCancelButton}" Command="{Binding CalculateImageShift}" />
+            <Button DockPanel.Dock="Right" Width="75" Command="{Binding ShowAbout}">About</Button>
+            <ProgressBar x:Name="ProgressIndicator" Minimum="0" Maximum="100" Value="{Binding Progress}" />
+        </DockPanel>
+    </Grid>
+</catel:Window>
