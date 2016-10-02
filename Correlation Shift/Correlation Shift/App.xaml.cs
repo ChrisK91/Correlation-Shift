@@ -36,9 +36,9 @@
             // For more information, see https://catelproject.atlassian.net/wiki/display/CTL/Performance+considerations
 
             // Log.Info("Improving performance");
-            // Catel.Data.ModelBase.DefaultSuspendValidationValue = true;
-            // Catel.Windows.Controls.UserControl.DefaultCreateWarningAndErrorValidatorForViewModelValue = false;
-            // Catel.Windows.Controls.UserControl.DefaultSkipSearchingForInfoBarMessageControlValue = true;
+            Catel.Data.ModelBase.DefaultSuspendValidationValue = true;
+            Catel.Windows.Controls.UserControl.DefaultCreateWarningAndErrorValidatorForViewModelValue = false;
+            Catel.Windows.Controls.UserControl.DefaultSkipSearchingForInfoBarMessageControlValue = true;
 
 
             // TODO: Register custom types in the ServiceLocator
@@ -53,6 +53,10 @@
             configService.InitializeLocalValue("MinY", -20);
             configService.InitializeLocalValue("MaxX", 20);
             configService.InitializeLocalValue("MaxY", 20);
+            configService.InitializeLocalValue("ImageJPath", null);
+#if WIN64
+            configService.InitializeLocalValue("MaxThreads", -1);
+#endif
 
             StyleHelper.CreateStyleForwardersForDefaultStyles();
 

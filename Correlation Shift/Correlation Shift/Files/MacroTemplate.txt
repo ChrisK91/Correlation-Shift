@@ -1,0 +1,11 @@
+﻿function processFile(file, offset_x, offset_y)
+{
+	open(file);
+	run("Translate...", "x=" + offset_x + " y=" + offset_y + " interpolation=None");
+	run("Save");
+	close();
+}
+
+%COMMANDS%
+
+showText("Processing finished");

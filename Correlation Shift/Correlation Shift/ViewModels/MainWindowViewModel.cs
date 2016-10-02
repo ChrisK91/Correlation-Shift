@@ -49,8 +49,13 @@
             var messageService = dependencyResolver.Resolve<IMessageService>();
 
             messageService.ShowInformationAsync("Shifting finished");
+            Progress = 100;
+
+            cts.Dispose();
+            cts = new CancellationTokenSource();
         }
 
+        private CancellationTokenSource cts = new CancellationTokenSource();
         // Performs the shift logic
         private void Shifter_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -67,11 +72,68 @@
             s.MaxX = configService.GetValue(ConfigurationContainer.Local, "MaxX", 20);
             s.MaxY = configService.GetValue(ConfigurationContainer.Local, "MaxY", 20);
 
+            Dictionary<string, Tuple<int, int>> resultCache = new Dictionary<string, Tuple<int, int>>();
+
+#if WIN64
+            ParallelOptions options = new ParallelOptions();
+            options.CancellationToken = cts.Token;
+
+            int MaxThreads = configService.GetValue(ConfigurationContainer.Local, "MaxY", -1);
+
+            if (MaxThreads > 0)
+                options.MaxDegreeOfParallelism = MaxThreads;
+            else
+                options.MaxDegreeOfParallelism = Environment.ProcessorCount * 2;
+#if DEBUG
+            Console.Write("Using {0} Threads", options.MaxDegreeOfParallelism);
+#endif
+
+            int progressCounter = 0;
+
+            try
+            {
+                Parallel.For(0, channelOneFilesCopy.Count, options, i =>
+                {
+                    options.CancellationToken.ThrowIfCancellationRequested();
+                    var offset = s.DetermineBestShift(channelOneFilesCopy[i], channelTwoFilesCopy[i]);
+
+                    Interlocked.Increment(ref progressCounter);
+                    shifter.ReportProgress((progressCounter * 100) / channelOneFilesCopy.Count);
+
+                    lock (resultCache)
+                    {
+                        resultCache.Add(channelOneFilesCopy[i], offset);
+                    }
+
+                });
+            }
+            catch (Exception ex) when (ex is OutOfMemoryException || ex is OperationCanceledException)
+            {
+                if(ex is OutOfMemoryException)
+                {
+                    System.Windows.Forms.MessageBox.Show("Out of Memory... Try limiting the number of parallel tasks in the application settings file.");
+                }
+            }
+
+            foreach (var item in resultCache)
+            {
+                Shifter.Shifter.LogShift(item.Key, e.Argument.ToString(), item.Value);
+            }
+#else
             for (int i = 0; (i < channelOneFilesCopy.Count && !shifter.CancellationPending); i++)
             {
                 shifter.ReportProgress((i * 100) / ChannelOneFiles.Count);
                 var offset = s.DetermineBestShift(channelOneFilesCopy[i], channelTwoFilesCopy[i]);
-                Shifter.Shifter.SaveShiftedImage(channelOneFilesCopy[i], e.Argument.ToString(), offset);
+                Shifter.Shifter.LogShift(channelOneFilesCopy[i], e.Argument.ToString(), offset);
+                resultCache.Add(channelOneFilesCopy[i], offset);
+            }
+#endif
+
+            string imageJPath = configService.GetValue<string>(ConfigurationContainer.Local, "ImageJPath", null);
+
+            if(imageJPath != null)
+            {
+                Shifter.Shifter.PerformShiftWithImageJ(resultCache, e.Argument.ToString(), imageJPath);
             }
         }
 
@@ -147,6 +209,10 @@
             if (shifter.IsBusy)
             {
                 shifter.CancelAsync();
+                cts.Cancel();
+                var dR = this.GetDependencyResolver();
+                var messageService = dR.Resolve<IMessageService>();
+                messageService.ShowInformationAsync("Cancellation requested. Processing will be aborted after the current images are processed.");
                 return;
             }
 
