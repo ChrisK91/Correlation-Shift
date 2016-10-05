@@ -1,6 +1,7 @@
 ﻿using Correlation_Shift.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -76,6 +77,12 @@ namespace Correlation_Shift.Views
             ScrollViewer _listboxScrollViewer1 = GetDescendantByType(Channel2Listbox, typeof(ScrollViewer)) as ScrollViewer;
             ScrollViewer _listboxScrollViewer2 = GetDescendantByType(Channel1Listbox, typeof(ScrollViewer)) as ScrollViewer;
             _listboxScrollViewer2.ScrollToVerticalOffset(_listboxScrollViewer1.VerticalOffset);
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+            e.Handled = true;
         }
     }
 }

@@ -31,6 +31,8 @@
                     <LineBreak />
                     <LineBreak />
                     You can drag and drop your files onto the boxes below, to remove files select them and press the delete key on your keyboard. Select multiple files while either holding control, or shift, or select all files with Ctrl+A. The extension has to either be "tif" or "tiff". The individual images must only contain one channel. The shift will be performed on the files listed in channel 1. You will be prompted for a save location once you pressed run. You have to specify an empty directory to prevent overwriting source files.
+                    <LineBreak />
+                    You have to specify the path to ImageJ in the settings in order to create shifted images. Otherwise only an offset file will be created.
         </TextBlock>
 
         <GroupBox Grid.Row="1" Header="Channel 1">
@@ -56,6 +58,7 @@
         <DockPanel  Grid.Row="2" Grid.ColumnSpan="2">
             <Button DockPanel.Dock="Left" Width="75" Content="{Binding RunCancelButton}" Command="{Binding CalculateImageShift}" />
             <Button DockPanel.Dock="Right" Width="75" Command="{Binding ShowAbout}">About</Button>
+            <TextBlock DockPanel.Dock="Right" Padding="10,0" VerticalAlignment="Center" Background="Transparent"><Hyperlink NavigateUri="https://chrisk91.github.io/tools/correlation-shift.html" RequestNavigate="Hyperlink_RequestNavigate">chrisk91.github.io</Hyperlink></TextBlock>
             <ProgressBar x:Name="ProgressIndicator" Minimum="0" Maximum="100" Value="{Binding Progress}" />
         </DockPanel>
     </Grid>
